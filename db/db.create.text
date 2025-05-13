@@ -1,0 +1,156 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema discount_db
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema discount_db
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `discount_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
+USE `discount_db` ;
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`campaign_types`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`campaign_types` (
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `type_name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 7
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`campaign_categories`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`campaign_categories` (
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `category_name` VARCHAR(255) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 5
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`discount_campaign`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`discount_campaign` (
+  `name` VARCHAR(255) NOT NULL,
+  `description` TEXT NULL DEFAULT NULL,
+  `category_id` INT NOT NULL,
+  `type_id` INT NOT NULL,
+  `is_active` TINYINT NOT NULL DEFAULT '1',
+  `start_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `end_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
+  INDEX `FK_efb5820bf9d4d1cb288b5d62db4` (`category_id` ASC) VISIBLE,
+  INDEX `FK_7e9c9cd930fa011f8087eb6c655` (`type_id` ASC) VISIBLE,
+  CONSTRAINT `FK_7e9c9cd930fa011f8087eb6c655`
+    FOREIGN KEY (`type_id`)
+    REFERENCES `discount_db`.`campaign_types` (`id`),
+  CONSTRAINT `FK_efb5820bf9d4d1cb288b5d62db4`
+    FOREIGN KEY (`category_id`)
+    REFERENCES `discount_db`.`campaign_categories` (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 6
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`discount_campaign_rules`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`discount_campaign_rules` (
+  `campaign_id` INT NOT NULL,
+  `percentage` DECIMAL(5,2) NOT NULL,
+  `fixed_amount` DECIMAL(10,2) NOT NULL,
+  `applicable_category` TEXT NULL DEFAULT NULL,
+  `points_cap_ratio` DECIMAL(3,2) NOT NULL,
+  `step_every_x` DECIMAL(10,2) NOT NULL,
+  `discount_y` DECIMAL(10,2) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `description` TEXT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `FK_cac030ef52955217a060c0caabe` (`campaign_id` ASC) VISIBLE,
+  CONSTRAINT `FK_cac030ef52955217a060c0caabe`
+    FOREIGN KEY (`campaign_id`)
+    REFERENCES `discount_db`.`discount_campaign` (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 6
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`apply_discounts`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`apply_discounts` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `cart_items` JSON NOT NULL,
+  `original_price` DECIMAL(10,2) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `points_used` INT NOT NULL,
+  `discount_price` DECIMAL(10,2) NOT NULL,
+  `rule_id` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `FK_a781d781f6dc217a1c8e0620a2c` (`rule_id` ASC) VISIBLE,
+  CONSTRAINT `FK_a781d781f6dc217a1c8e0620a2c`
+    FOREIGN KEY (`rule_id`)
+    REFERENCES `discount_db`.`discount_campaign_rules` (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 8
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+-- -----------------------------------------------------
+-- Table `discount_db`.`apply_discount_rules`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `discount_db`.`apply_discount_rules` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `apply_discount_id` INT NULL DEFAULT NULL,
+  `rule_id` INT NULL DEFAULT NULL,
+  `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  INDEX `FK_aa9bf25baa0e380fa23361d3a59` (`apply_discount_id` ASC) VISIBLE,
+  INDEX `FK_210caeff9ce2e043940f80061b2` (`rule_id` ASC) VISIBLE,
+  CONSTRAINT `FK_210caeff9ce2e043940f80061b2`
+    FOREIGN KEY (`rule_id`)
+    REFERENCES `discount_db`.`discount_campaign_rules` (`id`)
+    ON DELETE CASCADE,
+  CONSTRAINT `FK_aa9bf25baa0e380fa23361d3a59`
+    FOREIGN KEY (`apply_discount_id`)
+    REFERENCES `discount_db`.`apply_discounts` (`id`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 11
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
